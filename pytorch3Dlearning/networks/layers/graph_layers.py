@@ -13,6 +13,7 @@ def batched_index_select(input, dim, index):
     index = index.expand(expanse)
     return torch.gather(input, dim, index)
 
+
 def get_graph_feature(x, k=20, idx=None, pos=None, edge_function='global'):
     batch_size = x.size(0)
     num_points = x.size(2)
@@ -46,6 +47,7 @@ def get_graph_feature(x, k=20, idx=None, pos=None, edge_function='global'):
     elif edge_function == 'local_global':
         feature = torch.cat((feature - x, x), dim=3).permute(0, 3, 1, 2).contiguous()
     return feature, idx_org  # (batch_size, 2*num_dims, num_points, k)
+
 
 class EdgeGraphConvBlock(nn.Module):
     """
@@ -111,7 +113,8 @@ class EdgeGraphConvBlock(nn.Module):
         out = out.max(dim=-1, keepdim=False)[0]
         out = out.transpose(2, 1)
         return out, idx
-    
+
+
 class DilatedEdgeGraphConvBlock(nn.Module):
     """
     A block implementing a dilated edge graph convolution operation.
@@ -181,7 +184,7 @@ class DilatedEdgeGraphConvBlock(nn.Module):
         out = out.max(dim=-1, keepdim=False)[0]
         out = out.transpose(2, 1)
         return out, idx
-    
+
 
 class GraphGroupSelfAttention(nn.Module):
     """
@@ -201,16 +204,42 @@ class GraphGroupSelfAttention(nn.Module):
         self.num_heads = num_heads
         self.multihead_attn = nn.MultiheadAttention(in_channels, num_heads, dropout=dropout, batch_first=True)
 
-    def forward(self, x):
+    def forward(self, x, pos):
         """
         Forward pass of the GraphGroupSelfAttention module.
         :param x: Input tensor of shape (B, N, C), where B is the batch size, N is the number of nodes, and C is the number of input channels.
         :return: Output tensor of shape (B, N, C), representing the output of the GraphGroupSelfAttention module.
         """
-        group_idx = fps(x, self.group_k)
+        group_idx = fps(pos, self.group_k)
         groups = batched_index_select(x, 1, group_idx)  # (B, N, C) -> (B, group_k, C)
         attn_output, attn_output_weights = self.multihead_attn(x, groups, groups)
         return attn_output
 
 
+class BasicPointLayer(nn.Module):
+    """
+    Basic point layer consisting of a 1D convolution, batch normalization, leaky ReLU, and dropout.
+    """
+    def __init__(self, in_channels, out_channels, dropout=0.1, is_out=False):
+        """
+        Initializes the BasicPointLayer.
+        :param in_channels: Number of input channels.
+        :param out_channels: Number of output channels.
+        :param dropout: Dropout probability. Default is 0.1.
+        """
+        super(BasicPointLayer, self).__init__()
+        if is_out:
+            self.conv = nn.Sequential(
+                nn.Conv1d(in_channels, out_channels, kernel_size=1, bias=False),
+            )
+        else:
+            self.conv = nn.Sequential(
+                nn.Conv1d(in_channels, out_channels, kernel_size=1, bias=False),
+                nn.BatchNorm1d(out_channels, track_running_stats=False),
+                nn.LeakyReLU(negative_slope=0.2),
+                nn.Dropout(dropout)
+            )
 
+    def forward(self, x):
+        x = x.transpose(2, 1)
+        return self.conv(x).transpose(2, 1)

@@ -31,3 +31,21 @@ class MoveToOriginTransform(object):
     def __call__(self, pos, x):
         pos = pos - pos.mean(dim=0)
         return pos, x
+
+
+class NormalizeMesh(object):
+    """Normalize the point cloud to fit within a unit sphere centered at the origin."""
+
+    def __init__(self):
+        pass
+
+    def __call__(self, pos, x):
+        center = torch.mean(pos, dim=0)
+        distances = torch.linalg.norm(pos - center, dim=1)
+        max_distance = torch.max(distances)
+
+        # Calculate the scaling factor to fit within a unit sphere
+        scale_factor = 1.0 / max_distance
+
+        scaled_pos = pos * scale_factor
+        return scaled_pos, x

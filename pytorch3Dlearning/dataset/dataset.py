@@ -11,9 +11,9 @@ class FaustToyDataset(Dataset):
     Toy dataset for testing.
     """
 
-    def __init__(self, transform=MeshToPointCloud()):
-        self.mesh_dir = "data/faust/raw/"
-        self.labels = torch.from_numpy(np.load("data/faust/segmentations.npz")["segmentation_labels"])
+    def __init__(self, transform=MeshToPointCloud(use_fae_center=False)):
+        self.mesh_dir = "pytorch3Dlearning/data/faust/raw/"
+        self.labels = torch.from_numpy(np.load("pytorch3Dlearning/data/faust/segmentations.npz")["segmentation_labels"])
         self.transform = transform
         self.data = self.__load_meshes()
         self.data = [self.transform(mesh) for mesh in self.data]
