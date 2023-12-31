@@ -1,7 +1,7 @@
 import torch
 import trimesh
 from torch.utils.data import Dataset
-from dataset.preprocessing import MeshToPointCloud
+from pytorch3Dlearning.dataset.preprocessing import MeshToPointCloud
 import numpy as np
 import os
 

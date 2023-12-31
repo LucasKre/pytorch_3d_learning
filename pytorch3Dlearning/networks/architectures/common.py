@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from networks.layers.graph_layers import DilatedEdgeGraphConvBlock, EdgeGraphConvBlock, GraphGroupSelfAttention
+from pytorch3Dlearning.networks.layers.graph_layers import EdgeGraphConvBlock
 
 
 class DGCNN(nn.Module):

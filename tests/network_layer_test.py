@@ -1,4 +1,4 @@
-from networks.layers.graph_layers import DilatedEdgeGraphConvBlock, EdgeGraphConvBlock, GraphGroupSelfAttention
+from pytorch3Dlearning.networks.layers.graph_layers import DilatedEdgeGraphConvBlock, EdgeGraphConvBlock, GraphGroupSelfAttention
 import torch
 import torch.nn as nn
 import unittest

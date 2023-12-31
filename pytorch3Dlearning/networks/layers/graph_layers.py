@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-from utils.sampling import knn, fps
+from pytorch3Dlearning.utils.sampling import knn, fps
 
 
 def batched_index_select(input, dim, index):
