@@ -77,7 +77,7 @@ class EdgeGraphConvBlock(nn.Module):
         if edge_function not in ["global", "local", "local_global"]:
             raise ValueError(
                 f'Edge Function {edge_function} is not allowed. Only "global", "local" or "local_global" are valid')
-        if edge_function in ["local_global"]:
+        if edge_function == "local_global":
             self.in_channels = self.in_channels * 2
         self.conv = nn.Sequential(
             nn.Conv2d(self.in_channels, hidden_channels, kernel_size=1, bias=False),
@@ -102,6 +102,8 @@ class EdgeGraphConvBlock(nn.Module):
             torch.Tensor: Updated index tensor.
 
         """
+        if pos is None:
+            pos = x.clone()
         x_t = x.transpose(2, 1)
         pos_t = pos.transpose(2, 1)
         out, idx = get_graph_feature(x_t, edge_function=self.edge_function, k=self.k, idx=idx, pos=pos_t)
@@ -166,9 +168,9 @@ class DilatedEdgeGraphConvBlock(nn.Module):
             torch.Tensor: Index tensor of shape (B, N, K), representing the indices of the nearest neighbors.
 
         """
-        x_t = x.transpose(2, 1)
         if pos is None:
-            pos = x
+            pos = x.clone()
+        x_t = x.transpose(2, 1)
         B, N, C = x.shape
         cd = torch.cdist(pos, pos, p=2)
         idx_l = torch.topk(cd, self.dilation_k, largest=False)[1].reshape(B * N, -1)
@@ -200,6 +202,11 @@ class GraphGroupSelfAttention(nn.Module):
         self.multihead_attn = nn.MultiheadAttention(in_channels, num_heads, dropout=dropout, batch_first=True)
 
     def forward(self, x):
+        """
+        Forward pass of the GraphGroupSelfAttention module.
+        :param x: Input tensor of shape (B, N, C), where B is the batch size, N is the number of nodes, and C is the number of input channels.
+        :return: Output tensor of shape (B, N, C), representing the output of the GraphGroupSelfAttention module.
+        """
         group_idx = fps(x, self.group_k)
         groups = batched_index_select(x, 1, group_idx)  # (B, N, C) -> (B, group_k, C)
         attn_output, attn_output_weights = self.multihead_attn(x, groups, groups)
