@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='pytorch_3d_learning',
+    name='pytorch3Dlearning',
     version='0.1',
     packages=find_packages(),  # Automatically discover packages
     author='Lucas Krenmayr',
